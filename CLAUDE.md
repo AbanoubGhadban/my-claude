@@ -1,0 +1,1 @@
+- Never disable rubocop rule without getting a confirmation from me
