@@ -115,7 +115,29 @@ Display a clear summary:
 - **Worktree path:** \<path\>
 - **Body:** show the issue body (truncated if very long)
 
-### 5. Name the session
+### 5. If issue is already tracked, log the worktree
+
+Check whether this issue is being tracked:
+
+```bash
+test -f ~/.claude/issues/<owner>-<repo>-<number>.md
+```
+
+If it exists, follow the **Worktree Recording** rules from `commands/track-issue.md` — they are mandatory and idempotent. In short:
+
+1. Read the tracking file. If the current session's `**Worktree:**` field already records this worktree path, do nothing for the field.
+2. Otherwise, set the current session's `**Worktree:**` field to the new worktree's absolute path.
+3. Grep the current session's Work Log for `Worktree: Created at <path>`. If absent, append `- [<HH:MM>] Worktree: Created at <path>`.
+4. Refresh the snapshot file:
+   ```bash
+   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
+   ```
+
+Never duplicate work: if `/track-issue` (or another command, or the audit hook, or the user) already recorded this same event in this session, skip silently. Verify by grepping before appending. Do not invent or fabricate a log entry — only record what actually happened.
+
+If the tracking file does NOT exist, do nothing here. The user can run `/track-issue` later; the hook will catch up the current worktree state on the next audit cycle.
+
+### 6. Name the session
 
 Rename the current Claude Code session so it's easy to find later with `claude --resume`:
 
@@ -125,7 +147,7 @@ Rename the current Claude Code session so it's easy to find later with `claude -
 
 For example: `/rename issue-42-fix-login-bug`
 
-### 6. Wait for instructions
+### 7. Wait for instructions
 
 **STOP here.** Do NOT auto-start coding. Wait for me to tell you what to do with this issue.
 

@@ -115,7 +115,29 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
    git checkout <subtask-branch>
    ```
 
-### 7. Name the session
+### 7. If issue is already tracked, log the subtask worktree
+
+Check whether the parent issue is being tracked:
+
+```bash
+test -f ~/.claude/issues/<owner>-<repo>-<number>.md
+```
+
+If it exists, follow the **Worktree Recording** rules from `commands/track-issue.md`. Subtask worktrees use the `Subtask worktree:` log prefix instead of `Worktree:` so the main issue worktree stays distinguishable. In short:
+
+1. Read the tracking file. Grep the current session's Work Log for `Subtask worktree: Created at <subtask-worktree-path>`.
+2. If absent, append `- [<HH:MM>] Subtask worktree: Created at <subtask-worktree-path> (branch <subtask-branch>)`.
+3. Do NOT change the session header `**Worktree:**` field — that tracks the main issue worktree, not the subtask.
+4. Refresh the snapshot file:
+   ```bash
+   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
+   ```
+
+Idempotency: never duplicate. If the same subtask worktree was already logged (e.g. command run twice, or audit hook beat this command), skip silently.
+
+If the tracking file does NOT exist, do nothing here.
+
+### 8. Name the session
 
 If `--fork` was NOT used (session was not already named by the fork):
 ```
@@ -124,7 +146,7 @@ If `--fork` was NOT used (session was not already named by the fork):
 
 For example: `/rename issue-42-db-migration`
 
-### 8. Present summary
+### 9. Present summary
 
 Display a clear summary:
 
@@ -136,7 +158,7 @@ Display a clear summary:
 - **Session name:** issue-\<number\>-\<subtask-name\>
 - **Subtask Context:** show the extracted context (or note that none was found)
 
-### 9. Wait for instructions
+### 10. Wait for instructions
 
 **STOP here.** Do NOT auto-start coding. Wait for me to tell you what to do with this subtask.
 

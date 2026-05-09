@@ -148,7 +148,20 @@ For each merged+dirty worktree, show the dirty details:
 
 4. **Wait for my choice** before proceeding to the next dirty worktree
 
-### 7. Final cleanup
+### 7. Log removals in any tracked issue files
+
+After all removals are done (or as each one completes), update tracking files. For every removed worktree path, scan `~/.claude/issues/*.md` for matches in any session's `**Worktree:**` field or Work Log entries. For each match, follow the **Worktree Recording** idempotency rules from `commands/track-issue.md`:
+
+1. Grep the matching session's Work Log for `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`). If absent, append it.
+2. If the removed path matches the current session's `**Worktree:**` field, replace that field with `(none)`.
+3. Refresh the snapshot file for that issue:
+   ```bash
+   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
+   ```
+
+Skip silently if a removed path isn't referenced in any tracking file. Never duplicate an existing entry.
+
+### 8. Final cleanup
 
 1. Prune stale worktree references:
    ```bash
@@ -160,6 +173,7 @@ For each merged+dirty worktree, show the dirty details:
    - Number of branches deleted
    - Number of worktrees skipped (and why)
    - Any worktrees that remain
+   - Tracking files updated (if any)
 
 ## Important Notes
 

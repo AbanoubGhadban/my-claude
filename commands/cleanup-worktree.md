@@ -100,7 +100,20 @@ Parse the arguments to determine which worktree to clean up:
 
 4. **Wait for my choice** if the branch is not merged
 
-### 6. Final cleanup
+### 6. Log removal in any tracked issue files
+
+For every tracked-issue file under `~/.claude/issues/`, check if the just-removed worktree path appears in any session's `**Worktree:**` field or Work Log entries. For each match, follow the **Worktree Recording** idempotency rules from `commands/track-issue.md`:
+
+1. Grep the current session's Work Log for `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`). If absent, append it.
+2. If the removed path matches the current session's `**Worktree:**` field, replace that field with `(none)`.
+3. Refresh the snapshot file for that issue:
+   ```bash
+   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
+   ```
+
+Skip silently if the path isn't referenced in any tracking file. Never duplicate an existing entry. Use `Subtask worktree:` prefix when the worktree was originally logged with that prefix.
+
+### 7. Final cleanup
 
 1. Prune stale worktree references:
    ```bash
@@ -111,6 +124,7 @@ Parse the arguments to determine which worktree to clean up:
    - Worktree path removed
    - Branch deleted (or kept)
    - Any stashed/committed changes
+   - Tracking files updated (if any)
 
 ## Important Notes
 
