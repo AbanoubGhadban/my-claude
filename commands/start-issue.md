@@ -115,7 +115,22 @@ Display a clear summary:
 - **Worktree path:** \<path\>
 - **Body:** show the issue body (truncated if very long)
 
-### 5. Name the session
+### 5. If issue is being tracked, delegate worktree logging to /track-issue
+
+After the worktree is created, if this issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
+
+Instead:
+
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Worktree: Created at <path>` event with:
+   - `<owner>/<repo>#<number>` — from the issue
+   - `<path>` — absolute path of the worktree just created
+   - `<branch>` — the new branch name
+3. Whether tracking is even active, what file paths to write, and what idempotency checks to perform — all of that is owned by `/track-issue`. Follow whatever instructions are there at the time you read it; do not cache or duplicate them here.
+
+If `/track-issue`'s rules say "do nothing" (e.g. issue is not tracked, or the event is already recorded), respect that. Never invent log entries.
+
+### 6. Name the session
 
 Rename the current Claude Code session so it's easy to find later with `claude --resume`:
 
@@ -125,7 +140,7 @@ Rename the current Claude Code session so it's easy to find later with `claude -
 
 For example: `/rename issue-42-fix-login-bug`
 
-### 6. Wait for instructions
+### 7. Wait for instructions
 
 **STOP here.** Do NOT auto-start coding. Wait for me to tell you what to do with this issue.
 

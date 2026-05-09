@@ -148,7 +148,19 @@ For each merged+dirty worktree, show the dirty details:
 
 4. **Wait for my choice** before proceeding to the next dirty worktree
 
-### 7. Final cleanup
+### 7. Delegate removal logging to /track-issue
+
+After each removal (or after the batch completes), the **removal event must be recorded** if any issue tracks it. Do **not** scan tracking files or write log entries directly from this command — that responsibility lives in `commands/track-issue.md`.
+
+For each removed worktree:
+
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`) event with the absolute path of the removed worktree.
+3. Whether and where to write, how to find the right tracking file(s), and how to update the session header's `**Worktree:**` field — all owned by `/track-issue`.
+
+If `/track-issue`'s rules say "do nothing" (no issue tracks this path, or already logged), respect that.
+
+### 8. Final cleanup
 
 1. Prune stale worktree references:
    ```bash
@@ -160,6 +172,7 @@ For each merged+dirty worktree, show the dirty details:
    - Number of branches deleted
    - Number of worktrees skipped (and why)
    - Any worktrees that remain
+   - Tracking files updated (if any)
 
 ## Important Notes
 

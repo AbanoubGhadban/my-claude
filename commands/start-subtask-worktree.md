@@ -115,7 +115,22 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
    git checkout <subtask-branch>
    ```
 
-### 7. Name the session
+### 7. If parent issue is being tracked, delegate logging to /track-issue
+
+After the subtask worktree is created, if the parent issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
+
+Instead:
+
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Subtask worktree: Created at <path>` event with:
+   - `<owner>/<repo>#<number>` — the parent issue
+   - `<path>` — absolute path of the subtask worktree just created
+   - `<branch>` — the subtask branch name
+3. Subtask worktrees are distinct from the main issue worktree — `/track-issue`'s rules use a `Subtask worktree:` prefix so the two stay distinguishable in the log, and the session header's main `**Worktree:**` field is not changed by a subtask event. Follow whatever `/track-issue` says at read time.
+
+If `/track-issue`'s rules say "do nothing" (issue not tracked, event already recorded), respect that.
+
+### 8. Name the session
 
 If `--fork` was NOT used (session was not already named by the fork):
 ```
@@ -124,7 +139,7 @@ If `--fork` was NOT used (session was not already named by the fork):
 
 For example: `/rename issue-42-db-migration`
 
-### 8. Present summary
+### 9. Present summary
 
 Display a clear summary:
 
@@ -136,7 +151,7 @@ Display a clear summary:
 - **Session name:** issue-\<number\>-\<subtask-name\>
 - **Subtask Context:** show the extracted context (or note that none was found)
 
-### 9. Wait for instructions
+### 10. Wait for instructions
 
 **STOP here.** Do NOT auto-start coding. Wait for me to tell you what to do with this subtask.
 

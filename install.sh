@@ -72,6 +72,15 @@ done
 mkdir -p "$CLAUDE_DIR/issues"
 mkdir -p "$CLAUDE_DIR/session-issues"
 
+# Clean up legacy worktree-snapshots directory from the dropped audit-hook
+# experiment. Safe to remove — no active feature reads it. Only deletes when
+# the directory is empty so we never clobber unexpected user data.
+if [ -d "$CLAUDE_DIR/worktree-snapshots" ]; then
+  rmdir "$CLAUDE_DIR/worktree-snapshots" 2>/dev/null && \
+    echo "  Removed legacy directory: $CLAUDE_DIR/worktree-snapshots" || \
+    echo "  Note: $CLAUDE_DIR/worktree-snapshots is non-empty, leaving as-is"
+fi
+
 echo
 echo "Done! Claude customizations are now symlinked from this repo."
 echo
@@ -81,3 +90,5 @@ echo "    Add to shell config: export PATH=\"\$HOME/.local/bin:\$PATH\""
 echo
 echo "  - To enable session fork tracking for /track-issue, add to ~/.claude/settings.json:"
 echo '    "hooks": { "SessionStart": [{ "matcher": "resume", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/track-issue-resume.sh", "timeout": 5 }] }] }'
+echo
+echo "  - For a manual sweep of tracking-file completeness during a session, run /audit-tracking."
