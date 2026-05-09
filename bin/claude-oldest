@@ -20,4 +20,4 @@ for arg in "$@"; do
 done
 
 # shellcheck disable=SC2086
-exec claude $SKIP_PERMS $MODEL "${ARGS[@]}"
+exec claude $SKIP_PERMS $MODEL ${ARGS[@]+"${ARGS[@]}"}
