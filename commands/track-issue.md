@@ -97,16 +97,24 @@ Display:
 - Session ID: <id>
 - Other tracked issues (if any)
 
-Tell user: "I'll update the work log when we hit milestones (commits, plans, major findings). You can also ask me to update it anytime."
+Tell user: "I'll update the work log for significant events only — milestones, hard-won fixes, workarounds, major findings. Not routine commits. Ask me anytime to log something specific."
 
 ## Milestone Updates
 
-Throughout the session, when the following occur, update the session's Work Log:
+Throughout the session, update the Work Log **only for significant events** — not routine commits.
 
-1. **After commits**: Add commit hash and one-line summary
-2. **After finalizing a plan**: Add "Planned: <brief description>"
-3. **After major investigation findings**: Add "Found: <brief description>"
-4. **When user explicitly asks**: Update with whatever context is relevant
+**What to log:**
+1. **Milestones**: Major feature complete, significant refactor done, important decision made
+2. **Hard-won fixes**: Bugs that took significant debugging time to solve
+3. **Workarounds/patches**: Temporary fixes for critical issues (even in external libraries/frameworks we maintain)
+4. **Major investigation findings**: Root cause discovered, unexpected behavior explained
+5. **Plans finalized**: Architecture decisions, implementation strategy agreed
+6. **User explicitly asks**: Whatever context they want recorded
+
+**What NOT to log:**
+- Routine commits (typo fixes, small adjustments, incremental progress)
+- Standard implementation steps
+- Every file change
 
 To update, read the tracking file, find the current session section, append to Work Log, write back.
 
@@ -119,10 +127,10 @@ Example:
 ```markdown
 ### Work Log
 - Session started — tracking issue #42
-- [14:30] Commit: abc1234 - Fix null check in auth handler
-- [14:45] Found: Bug caused by race condition in token refresh
-- [15:00] Planned: Add mutex lock before token access
-- [15:20] Commit: def5678 - Add mutex lock to prevent race condition
+- [14:45] Found: Race condition in token refresh — tokens invalidated mid-request when concurrent refresh triggered
+- [15:00] Planned: Add mutex lock + token versioning to handle concurrent refreshes
+- [15:20] Fixed: abc1234 - Took 2h to trace; symptom was intermittent 401s only under load
+- [16:00] Workaround: Patched redis-client@3.2.1 connection pooling bug (upstream PR pending)
 ```
 
 ## Session End
