@@ -117,7 +117,7 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 
 ### 7. If parent issue is being tracked, delegate logging to /track-issue
 
-After the subtask worktree is created, if the parent issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files, snapshots, or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
+After the subtask worktree is created, if the parent issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
 
 Instead:
 

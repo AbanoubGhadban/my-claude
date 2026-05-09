@@ -71,7 +71,6 @@ done
 # Create directories for issue tracking
 mkdir -p "$CLAUDE_DIR/issues"
 mkdir -p "$CLAUDE_DIR/session-issues"
-mkdir -p "$CLAUDE_DIR/worktree-snapshots"
 
 echo
 echo "Done! Claude customizations are now symlinked from this repo."
@@ -83,7 +82,4 @@ echo
 echo "  - To enable session fork tracking for /track-issue, add to ~/.claude/settings.json:"
 echo '    "hooks": { "SessionStart": [{ "matcher": "resume", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/track-issue-resume.sh", "timeout": 5 }] }] }'
 echo
-echo "  - To enable the worktree-audit hook (logs worktree create/remove for tracked issues),"
-echo "    add to ~/.claude/settings.json:"
-echo '    "hooks": { "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/worktree-audit.sh", "timeout": 5 }] }] }'
-echo "    The hook is gated: it stays silent unless >=30min since last audit AND worktree set changed."
+echo "  - For a manual sweep of tracking-file completeness during a session, run /audit-tracking."

@@ -102,13 +102,13 @@ Parse the arguments to determine which worktree to clean up:
 
 ### 6. Delegate removal logging to /track-issue
 
-After the worktree is removed, the **removal event must be recorded** if any issue tracks it. Do **not** scan tracking files, manipulate snapshots, or write log entries directly from this command — that responsibility lives in `commands/track-issue.md`.
+After the worktree is removed, the **removal event must be recorded** if any issue tracks it. Do **not** scan tracking files or write log entries directly from this command — that responsibility lives in `commands/track-issue.md`.
 
 Instead:
 
 1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
 2. Apply its rules for a `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`) event with the absolute path of the just-removed worktree.
-3. Whether and where to write, how to find the right tracking file(s), how to update the session header's `**Worktree:**` field, and how to refresh the snapshot — all owned by `/track-issue`. Follow whatever instructions are there at the time you read it.
+3. Whether and where to write, how to find the right tracking file(s), and how to update the session header's `**Worktree:**` field — all owned by `/track-issue`. Follow whatever instructions are there at the time you read it.
 
 If `/track-issue`'s rules say "do nothing" (no issue tracks this path, or already logged), respect that.
 

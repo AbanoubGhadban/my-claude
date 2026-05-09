@@ -117,7 +117,7 @@ Display a clear summary:
 
 ### 5. If issue is being tracked, delegate worktree logging to /track-issue
 
-After the worktree is created, if this issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files, snapshots, or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
+After the worktree is created, if this issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
 
 Instead:
 
@@ -126,7 +126,7 @@ Instead:
    - `<owner>/<repo>#<number>` — from the issue
    - `<path>` — absolute path of the worktree just created
    - `<branch>` — the new branch name
-3. Whether tracking is even active, what file paths to write, what idempotency checks to perform, and how to refresh the snapshot — all of that is owned by `/track-issue`. Follow whatever instructions are there at the time you read it; do not cache or duplicate them here.
+3. Whether tracking is even active, what file paths to write, and what idempotency checks to perform — all of that is owned by `/track-issue`. Follow whatever instructions are there at the time you read it; do not cache or duplicate them here.
 
 If `/track-issue`'s rules say "do nothing" (e.g. issue is not tracked, or the event is already recorded), respect that. Never invent log entries.
 
