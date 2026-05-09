@@ -140,20 +140,54 @@ When session ends or user switches to different work, add final entry:
 - [<timestamp>] Session ended
 ```
 
-## Session Fork Tracking
+## Session Branch/Fork Tracking
 
-To automatically track forked sessions, add this hook to `~/.claude/settings.json`:
+When a session is branched via `/branch`, the parent session's issue tracking should carry over to the new session.
+
+### How it works
+
+1. A `UserPromptSubmit` hook detects `/branch` commands
+2. If parent session was tracking issues, hook injects marker: `<branch-tracking-inherit parent="..." issues="..."/>`
+3. Branched session inherits this marker in conversation context
+4. Claude detects marker and registers new session
+
+### Handling the marker
+
+**On EVERY response**, check conversation context for `<branch-tracking-inherit>` marker. If found AND current session not yet registered:
+
+1. Parse parent session ID and issues list from marker
+2. Create session-issues mapping:
+   ```bash
+   mkdir -p ~/.claude/session-issues
+   echo "<issues>" | tr ',' '\n' > ~/.claude/session-issues/$CLAUDE_CODE_SESSION_ID
+   ```
+3. Append to each issue's tracking file:
+   ```markdown
+   ---
+
+   ## Session: <current-session-id> (branched from <parent-session-id>)
+   **Started:** <timestamp>
+   **Branch:** <branch-name>
+   **Commits:** (none yet)
+
+   ### Work Log
+   - Session branched from <parent-session-id>
+   ```
+4. Do this silently — don't mention it to user unless asked
+
+### Hook setup
+
+Add to `~/.claude/settings.json`:
 
 ```json
 {
   "hooks": {
-    "SessionStart": [
+    "UserPromptSubmit": [
       {
-        "matcher": "resume",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/track-issue-resume.sh",
+            "command": "bash ~/.claude/hooks/track-issue-branch.sh",
             "timeout": 5
           }
         ]
@@ -162,8 +196,6 @@ To automatically track forked sessions, add this hook to `~/.claude/settings.jso
   }
 }
 ```
-
-When a session is forked/resumed, the hook reads which issues the parent session was tracking and adds the new session to those issue files automatically.
 
 ## Important Notes
 
