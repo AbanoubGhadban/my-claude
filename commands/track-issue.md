@@ -49,7 +49,7 @@ File path: `~/.claude/issues/<owner>-<repo>-<number>.md`
 ### 4. Add session entry
 
 Get current session info:
-- Session ID: Use `$CLAUDE_SESSION_ID` environment variable or generate unique ID
+- Session ID: Use `$CLAUDE_CODE_SESSION_ID` environment variable or generate unique ID
 - Timestamp: Current date/time
 - Branch: `git branch --show-current`
 - Initial description: "Session started — tracking issue #<number>"
@@ -59,7 +59,7 @@ If file exists, append new session entry. If not, create with header.
 Also save the session-to-issue mapping for fork tracking:
 ```bash
 mkdir -p ~/.claude/session-issues
-echo "<owner>-<repo>-<number>" >> ~/.claude/session-issues/$CLAUDE_SESSION_ID
+echo "<owner>-<repo>-<number>" >> ~/.claude/session-issues/$CLAUDE_CODE_SESSION_ID
 ```
 
 **File format:**
