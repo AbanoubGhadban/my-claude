@@ -109,7 +109,8 @@ Throughout the session, update the Work Log **only for significant events** — 
 3. **Workarounds/patches**: Temporary fixes for critical issues (even in external libraries/frameworks we maintain)
 4. **Major investigation findings**: Root cause discovered, unexpected behavior explained
 5. **Plans finalized**: Architecture decisions, implementation strategy agreed
-6. **User explicitly asks**: Whatever context they want recorded
+6. **PRs opened**: When creating a PR, log PR number and URL
+7. **User explicitly asks**: Whatever context they want recorded
 
 **What NOT to log:**
 - Routine commits (typo fixes, small adjustments, incremental progress)
@@ -131,6 +132,7 @@ Example:
 - [15:00] Planned: Add mutex lock + token versioning to handle concurrent refreshes
 - [15:20] Fixed: abc1234 - Took 2h to trace; symptom was intermittent 401s only under load
 - [16:00] Workaround: Patched redis-client@3.2.1 connection pooling bug (upstream PR pending)
+- [16:30] PR: #156 https://github.com/owner/repo/pull/156
 ```
 
 ## Session End
