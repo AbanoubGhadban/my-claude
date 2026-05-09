@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Launch Claude with Opus 4.5 model (oldest supported)
+# Usage: claude-oldest [--safe] [claude args...]
+#
+# --safe: Run without --dangerously-skip-permissions
+
+set -euo pipefail
+
+SKIP_PERMS="--dangerously-skip-permissions"
+MODEL="--model claude-opus-4-5-20251101"
+ARGS=()
+
+for arg in "$@"; do
+  if [[ "$arg" == "--safe" ]]; then
+    SKIP_PERMS=""
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+# shellcheck disable=SC2086
+exec claude $SKIP_PERMS $MODEL "${ARGS[@]}"
