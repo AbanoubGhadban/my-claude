@@ -52,7 +52,7 @@ Get current session info:
 - Session ID: Use `$CLAUDE_CODE_SESSION_ID` environment variable or generate unique ID
 - Timestamp: Current date/time
 - Branch: `git branch --show-current`
-- Worktree path: if cwd is inside a worktree (not the main working tree), record absolute path of that worktree; otherwise `(none)` (the Worktree Recording section below keeps this in sync)
+- Worktree path: if cwd is inside a worktree (not the main working tree), record absolute path of that worktree; otherwise `(none)` (the Worktree Recording section below keeps this in sync). The `**Worktree:**` field tracks the **main worktree this session is associated with for this issue** — not necessarily the cwd at any given moment. Subtask worktrees are recorded in the Work Log only and never replace this field.
 - Initial description: "Session started — tracking issue #<number>"
 
 If file exists, append new session entry. If not, create with header.
@@ -84,6 +84,17 @@ Issue: https://github.com/<owner>/<repo>/issues/<number>
 ```
 
 **File format (existing file, new session appended):** keep the file header as-is. Only add a new `## Session:` block at the bottom.
+
+**Canonical session-block field order** (used for new blocks, and for inserting missing fields into legacy blocks):
+
+```
+**Started:**
+**Branch:**
+**Worktree:**
+**Commits:**
+```
+
+When a legacy session block (written before this format existed) is missing a field that needs to be set, insert it at its canonical position relative to the other fields — never reorder the existing ones, never append at the end of the field list out of order.
 
 ### 5. Cross-reference if multi-issue
 
@@ -120,16 +131,25 @@ Rule of thumb: this section **observes and records**. Worktree-mutating commands
 Before writing anything, check the file:
 
 1. **Session header `**Worktree:**` field**: only update if it is missing, `(none)`, or different from the path you intend to record. If it already matches, do nothing.
-2. **Work Log lines**: only append a `Worktree: Created at <path>` or `Worktree: Removed at <path>` entry if no existing line in the current session's Work Log mentions that exact path with that exact action. Use a literal-string grep against the file before appending.
+2. **Work Log lines**: only append a `Worktree: Created at <path>` or `Worktree: Removed at <path>` entry if no existing line in the current session's Work Log mentions that exact path with that exact action. Use **`grep -F`** (fixed-string match, not regex) before appending — paths often contain `.`, `/`, `$`, brackets, etc. that would otherwise be treated as regex metacharacters.
 
 If another command (e.g. `/start-issue`) already updated the field and log entry, your job here is done — verify and move on. Never re-log the same event.
+
+### Field reset on removal
+
+When you log a `Worktree: Removed at <path>` event for the current session, additionally check the session header's `**Worktree:**` field:
+
+- If the field's value matches `<path>`, set the field to `(none)`.
+- If the field already says `(none)` or points to a different path, leave it alone.
+
+Do not perform this reset for `Subtask worktree: Removed …` events — those never touched the main session field in the first place.
 
 ### Trigger points
 
 Record/update at every one of these moments:
 
-- At `/track-issue` setup time (this command), after step 4: scan `git worktree list --porcelain` for a worktree whose branch starts with `<issue-number>-` or whose path equals current cwd. If found, populate the session's `**Worktree:**` field. If the worktree was created in this session and not yet logged, append a `Worktree: Created at <path>` entry.
-- When the user mentions creating, moving, or removing a worktree.
+- At `/track-issue` setup time, after step 4: scan `git worktree list --porcelain` for a worktree whose branch starts with `<issue-number>-` or whose path equals current cwd. If found, populate the session's `**Worktree:**` field. If the worktree was created in this session and not yet logged, append a `Worktree: Created at <path>` entry.
+- When the user reports they have actually created, moved, or removed a worktree (a concrete past-tense statement — not "I might create one later" or "should we add one?").
 - When you observe (via tool output) a `git worktree add|remove|move` command run.
 - When the user runs `/audit-tracking`, which forces a full review of the tracking file against the current session's activity.
 
@@ -163,6 +183,16 @@ Throughout the session, update the Work Log **only for significant events** — 
 - Every file change
 
 To update, read the tracking file, find the current session section, append to Work Log, write back.
+
+### Idempotency (mandatory — never duplicate entries)
+
+Before appending any milestone-style entry (PR, Plan, Found, Fixed, Workaround, …) to the Work Log:
+
+1. Identify a **stable substring** that uniquely identifies the event — for example, the PR URL or `PR: #<number>`, the commit SHA from a `Fixed: <sha>` entry, or a distinctive noun phrase from a `Plan:` description (avoid generic words like "fix" or "update").
+2. Run `grep -F` (fixed-string match) for that substring against the current session's Work Log block.
+3. If a match exists, do not append. If your wording would differ from a previously logged entry but the underlying event is the same (e.g. same PR number, same SHA, same plan), treat it as already logged.
+
+This applies whether the entry is being added by `/track-issue` itself, by another command that defers here, or by `/audit-tracking`.
 
 **Update format:**
 ```markdown

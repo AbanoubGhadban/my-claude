@@ -103,3 +103,4 @@ This command does **not** create branches, worktrees, PRs, or any new state. It 
 - Always use the existing log formats from `commands/track-issue.md`. Do not introduce new formats.
 - This is a manual command — running it twice in a row should produce no second-pass changes (idempotency).
 - If the session is forked/branched and the resume hook has already created a session block, audit *that* block — not the parent's.
+- **Context-window limits:** the audit can only see what is currently in the conversation context. In long sessions, earlier turns may have been compacted or summarized — events from those turns are no longer directly recoverable. Treat absence-from-context as "uncertain", not "did not happen". Worktree state and `gh`/`git` outputs run *during* the audit are authoritative; conversation memory of earlier work is best-effort.

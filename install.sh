@@ -72,6 +72,15 @@ done
 mkdir -p "$CLAUDE_DIR/issues"
 mkdir -p "$CLAUDE_DIR/session-issues"
 
+# Clean up legacy worktree-snapshots directory from the dropped audit-hook
+# experiment. Safe to remove — no active feature reads it. Only deletes when
+# the directory is empty so we never clobber unexpected user data.
+if [ -d "$CLAUDE_DIR/worktree-snapshots" ]; then
+  rmdir "$CLAUDE_DIR/worktree-snapshots" 2>/dev/null && \
+    echo "  Removed legacy directory: $CLAUDE_DIR/worktree-snapshots" || \
+    echo "  Note: $CLAUDE_DIR/worktree-snapshots is non-empty, leaving as-is"
+fi
+
 echo
 echo "Done! Claude customizations are now symlinked from this repo."
 echo
