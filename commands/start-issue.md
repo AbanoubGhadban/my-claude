@@ -115,27 +115,20 @@ Display a clear summary:
 - **Worktree path:** \<path\>
 - **Body:** show the issue body (truncated if very long)
 
-### 5. If issue is already tracked, log the worktree
+### 5. If issue is being tracked, delegate worktree logging to /track-issue
 
-Check whether this issue is being tracked:
+After the worktree is created, if this issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files, snapshots, or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
 
-```bash
-test -f ~/.claude/issues/<owner>-<repo>-<number>.md
-```
+Instead:
 
-If it exists, follow the **Worktree Recording** rules from `commands/track-issue.md` — they are mandatory and idempotent. In short:
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Worktree: Created at <path>` event with:
+   - `<owner>/<repo>#<number>` — from the issue
+   - `<path>` — absolute path of the worktree just created
+   - `<branch>` — the new branch name
+3. Whether tracking is even active, what file paths to write, what idempotency checks to perform, and how to refresh the snapshot — all of that is owned by `/track-issue`. Follow whatever instructions are there at the time you read it; do not cache or duplicate them here.
 
-1. Read the tracking file. If the current session's `**Worktree:**` field already records this worktree path, do nothing for the field.
-2. Otherwise, set the current session's `**Worktree:**` field to the new worktree's absolute path.
-3. Grep the current session's Work Log for `Worktree: Created at <path>`. If absent, append `- [<HH:MM>] Worktree: Created at <path>`.
-4. Refresh the snapshot file:
-   ```bash
-   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
-   ```
-
-Never duplicate work: if `/track-issue` (or another command, or the audit hook, or the user) already recorded this same event in this session, skip silently. Verify by grepping before appending. Do not invent or fabricate a log entry — only record what actually happened.
-
-If the tracking file does NOT exist, do nothing here. The user can run `/track-issue` later; the hook will catch up the current worktree state on the next audit cycle.
+If `/track-issue`'s rules say "do nothing" (e.g. issue is not tracked, or the event is already recorded), respect that. Never invent log entries.
 
 ### 6. Name the session
 

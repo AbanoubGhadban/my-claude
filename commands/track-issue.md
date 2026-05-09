@@ -120,6 +120,14 @@ Tell user: "I'll update the work log for significant events only — milestones,
 
 Throughout the session, keep the tracking file in sync with worktree state for this issue. Apply these rules whenever a worktree is created, removed, or noticed — whether the action came from `/start-issue`, `/start-subtask-worktree`, `/cleanup-worktree*`, raw `git worktree` invocations, IDE tooling, or direct user commands.
 
+### Scope (this is the canonical record-keeper)
+
+This section is the single source of truth for worktree event recording. Other commands (`/start-issue`, `/start-subtask-worktree`, `/cleanup-worktree`, `/cleanup-worktrees`) delegate here — they do not write tracking files, manage snapshots, or know log formats. If you are reading those commands and they say "follow `/track-issue` Worktree Recording", they mean this section.
+
+Conversely, `/track-issue` does **not** create, remove, or move worktrees. Those are owned by `/start-issue`, `/start-subtask-worktree`, and `/cleanup-worktree*`. If at setup time the user wants a worktree and none exists, suggest `/start-issue <number>` (or `/start-subtask-worktree`) — do not execute `git worktree add` from here. Likewise, do not run `git worktree remove`; defer to `/cleanup-worktree`.
+
+Rule of thumb: this section **observes and records**. Worktree-mutating commands **act and delegate the recording back here**.
+
 ### Idempotency (mandatory — never duplicate entries)
 
 Before writing anything, check the file:

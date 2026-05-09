@@ -115,27 +115,20 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
    git checkout <subtask-branch>
    ```
 
-### 7. If issue is already tracked, log the subtask worktree
+### 7. If parent issue is being tracked, delegate logging to /track-issue
 
-Check whether the parent issue is being tracked:
+After the subtask worktree is created, if the parent issue is being tracked, the **creation event must be recorded**. Do **not** manipulate tracking files, snapshots, or log formats directly from this command — that responsibility lives in `commands/track-issue.md`.
 
-```bash
-test -f ~/.claude/issues/<owner>-<repo>-<number>.md
-```
+Instead:
 
-If it exists, follow the **Worktree Recording** rules from `commands/track-issue.md`. Subtask worktrees use the `Subtask worktree:` log prefix instead of `Worktree:` so the main issue worktree stays distinguishable. In short:
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Subtask worktree: Created at <path>` event with:
+   - `<owner>/<repo>#<number>` — the parent issue
+   - `<path>` — absolute path of the subtask worktree just created
+   - `<branch>` — the subtask branch name
+3. Subtask worktrees are distinct from the main issue worktree — `/track-issue`'s rules use a `Subtask worktree:` prefix so the two stay distinguishable in the log, and the session header's main `**Worktree:**` field is not changed by a subtask event. Follow whatever `/track-issue` says at read time.
 
-1. Read the tracking file. Grep the current session's Work Log for `Subtask worktree: Created at <subtask-worktree-path>`.
-2. If absent, append `- [<HH:MM>] Subtask worktree: Created at <subtask-worktree-path> (branch <subtask-branch>)`.
-3. Do NOT change the session header `**Worktree:**` field — that tracks the main issue worktree, not the subtask.
-4. Refresh the snapshot file:
-   ```bash
-   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
-   ```
-
-Idempotency: never duplicate. If the same subtask worktree was already logged (e.g. command run twice, or audit hook beat this command), skip silently.
-
-If the tracking file does NOT exist, do nothing here.
+If `/track-issue`'s rules say "do nothing" (issue not tracked, event already recorded), respect that.
 
 ### 8. Name the session
 

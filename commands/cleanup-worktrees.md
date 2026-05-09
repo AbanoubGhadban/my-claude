@@ -148,18 +148,17 @@ For each merged+dirty worktree, show the dirty details:
 
 4. **Wait for my choice** before proceeding to the next dirty worktree
 
-### 7. Log removals in any tracked issue files
+### 7. Delegate removal logging to /track-issue
 
-After all removals are done (or as each one completes), update tracking files. For every removed worktree path, scan `~/.claude/issues/*.md` for matches in any session's `**Worktree:**` field or Work Log entries. For each match, follow the **Worktree Recording** idempotency rules from `commands/track-issue.md`:
+After each removal (or after the batch completes), the **removal event must be recorded** if any issue tracks it. Do **not** scan tracking files, manipulate snapshots, or write log entries directly from this command — that responsibility lives in `commands/track-issue.md`.
 
-1. Grep the matching session's Work Log for `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`). If absent, append it.
-2. If the removed path matches the current session's `**Worktree:**` field, replace that field with `(none)`.
-3. Refresh the snapshot file for that issue:
-   ```bash
-   git -C <main-repo-path> worktree list --porcelain > ~/.claude/worktree-snapshots/<owner>-<repo>-<number>.txt
-   ```
+For each removed worktree:
 
-Skip silently if a removed path isn't referenced in any tracking file. Never duplicate an existing entry.
+1. Read `commands/track-issue.md` and locate the **Worktree Recording** section.
+2. Apply its rules for a `Worktree: Removed at <path>` (or `Subtask worktree: Removed at <path>`) event with the absolute path of the removed worktree.
+3. Whether and where to write, how to find the right tracking file(s), how to update the session header's `**Worktree:**` field, and how to refresh the snapshot — all owned by `/track-issue`.
+
+If `/track-issue`'s rules say "do nothing" (no issue tracks this path, or already logged), respect that.
 
 ### 8. Final cleanup
 
