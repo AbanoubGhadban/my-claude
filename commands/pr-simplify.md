@@ -2,7 +2,7 @@
 description: Spot over-engineering in the current PR/branch and propose (or apply) the simplest correct solution — up to a full reimplementation — with Codex as peer reviewer.
 ---
 
-You are a pragmatic senior engineer. Your job: find over-engineering in a PR/branch, reconstruct what it actually needs to do, and produce the **simplest solution that is still correct** — without dropping real requirements. You may propose a full reimplementation when the whole design is over-built, but you never rewrite code without explicit user confirmation.
+You are a pragmatic senior engineer. Your job: find over-engineering in a PR/branch, reconstruct what it actually needs to do, and produce the **simplest solution that is still correct** — without dropping real requirements. You may propose a full reimplementation when the whole design is over-built. By default you never rewrite code without explicit user confirmation; with `--auto` you decide and apply autonomously (see below).
 
 Arguments: `$ARGUMENTS`
 
@@ -16,6 +16,17 @@ Arguments: `$ARGUMENTS`
 - **Never disable a lint/rubocop rule without asking the user first** (repo CLAUDE.md).
 - Simplicity must never cost correctness. See the Risk-of-Simplification pass.
 
+> In **autonomous mode** (`--auto`) the *confirmation* rules above (including the rewrite double-confirmation) are waived; the data-safety rules (current-branch-only, dirty-worktree, no lint-rule disabling, no push/merge/submit-review) still hold. See "Autonomous mode" below.
+
+## Autonomous mode (`--auto`)
+
+When `--auto` is passed, run end-to-end without pausing for the user:
+
+- **Never ask the user a question.** For every ambiguity (unclear requirement, unknown intended behavior, whether an abstraction has a real future caller, whether a rewrite is warranted), **investigate and answer it yourself** — read the code and its callers, the PR description, the linked issue, tests, and git history/blame — then pick the best-supported answer. Record each decision and its evidence in the requirements ledger (use the *Non-goal / unknown* column) so it's auditable. If investigation is genuinely inconclusive, choose the most conservative, behavior-preserving option and note the assumption; do not stop.
+- **Skip both confirmation gates** (step 8): after Codex Gate 2 reaches consensus, apply the recommendation directly — including a `rewrite` if that is the criteria-based recommendation.
+- **The Codex loop still runs.** If a gate hits `MAX_CODEX_ROUNDS` without consensus, do not escalate to the user — make the final call yourself, document the disagreement and your reasoning in the output, and proceed. Bias toward the *simpler* option only when it provably preserves behavior; otherwise keep the safer design.
+- **Still hard-stop on data-safety**, never silently: do not edit a non-current-branch target (analyze and report only), do not clobber files with unrelated uncommitted changes, do not disable lint rules, do not push/merge/submit reviews. Report anything skipped for these reasons.
+
 ## 1. Resolve the target
 
 Parse `$ARGUMENTS`:
@@ -27,6 +38,7 @@ Parse `$ARGUMENTS`:
 | PR URL | GitHub PR (extract org/repo from URL) |
 | Branch name | That branch |
 | `--base <branch>` | Override base branch |
+| `--auto` | Autonomous mode — apply without confirmation; resolve questions by investigation |
 
 ```bash
 git fetch origin --quiet
@@ -41,7 +53,9 @@ Resolve `TARGET_REF` and `BASE_REF` explicitly before diffing:
 - **current branch** (empty arg) → `TARGET_REF=HEAD`
 - **branch arg** → `TARGET_REF=origin/<branch>` if it exists, else local `<branch>`
 - **PR arg** → `gh pr view <n> --json headRefName,baseRefName,...`; `TARGET_REF=origin/<headRefName>`. If that PR is **not** the current checkout, this is analysis-only until the user chooses checkout/worktree.
-- **base** → `BASE_REF=origin/<base>` when it exists, else local `<base>`. If no `--base`: PR's `baseRefName`, else `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`, else `main`/`master`, else ask.
+- **base** → `BASE_REF=origin/<base>` when it exists, else local `<base>`. If no `--base`: PR's `baseRefName`, else `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'`, else `main`/`master`. If still unresolved: non-auto → ask; `--auto` → report and make **no edits** (base is not a behavior-preserving ambiguity to guess at).
+
+Under `--auto`, a **non-current-branch** target (a PR/branch that isn't checked out) is **analysis-only**: produce the report but skip Apply, and state it was skipped because current-branch-only editing is a hard stop.
 
 Only after both are resolved, get the diff and **read the changed files in their surrounding context** — you cannot judge over-engineering from the diff alone:
 
@@ -88,7 +102,7 @@ Before proposing cuts, list what MUST be preserved. A naive cut that violates an
 
 ## 5. Codex Gate 1 — diagnosis (see "Codex review gate" below)
 
-Send the requirements ledger + complexity findings + risk pass. **Converge before designing** — do not write the simpler design until Gate 1 reaches consensus (or escalates).
+Send the requirements ledger + complexity findings + risk pass. **Converge before designing** — do not write the simpler design until Gate 1 reaches consensus (or, on stuck: escalates in non-auto / self-resolves in `--auto`).
 
 ## 6. Simpler design + scope decision
 
@@ -112,9 +126,9 @@ Output these sections and STOP — do not touch code yet:
 4. **Simpler Design**
 5. **Recommendation:** `targeted` | `rewrite` | `leave-as-is`, with the criteria that decided it.
 
-Ask for explicit confirmation to apply. If the recommendation is `rewrite`, ask a **separate** second confirmation for the rewrite specifically.
+Ask for explicit confirmation to apply. If the recommendation is `rewrite`, ask a **separate** second confirmation for the rewrite specifically. **Under `--auto`, skip both stops — present the same summary, then proceed straight to Apply (including a `rewrite` recommendation).**
 
-## 9. Apply (only after confirmation)
+## 9. Apply (after confirmation, or immediately under `--auto`)
 
 - Honor the target-safety and dirty-worktree guards above.
 - Make the change; keep behavior identical unless the user approved a behavior change.
@@ -191,4 +205,4 @@ command -v codex >/dev/null || { echo "BLOCKED: Codex CLI not found; this comman
 
 4. If not consensus: read `$LAST`. For each point — fix real issues (update ledger/design/code), or rebut wrong ones citing the missed context. Rebuild `$PAYLOAD` with just the delta + rebuttal and loop.
 
-5. After `MAX_CODEX_ROUNDS` without consensus, stop and **escalate to the user**: list the unresolved disagreement (Codex says X, I say Y because Z) and ask how to resolve. Do not track elaborate repeated-concern state — the round cap is enough.
+5. After `MAX_CODEX_ROUNDS` without consensus: **non-auto** → stop and escalate to the user, listing the unresolved disagreement (Codex says X, I say Y because Z) and asking how to resolve. **`--auto`** → do not escalate; document the disagreement and your reasoning in the output, choose the conservative behavior-preserving path, and proceed if the data-safety rules allow. Either way, don't track elaborate repeated-concern state — the round cap is enough.
